@@ -15,4 +15,3 @@ struct Git_App: App {
         }
     }
 }
-

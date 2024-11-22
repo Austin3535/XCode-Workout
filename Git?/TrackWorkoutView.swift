@@ -3,7 +3,7 @@ import SwiftUI
 struct TrackWorkoutView: View {
     @EnvironmentObject var routine: Routine
     @Environment(\.presentationMode) var presentationMode
-    @State private var setsData: [UUID: [Set]] = [:]
+    @State private var setsData: [UUID: [WorkoutSet]] = [:]  // Changed Set to WorkoutSet
     @State private var restTimer: Timer?
     @State private var remainingRestTime: Int = 0
     var day: Day
@@ -77,34 +77,38 @@ struct TrackWorkoutView: View {
         }
     }
 
-    func getSetData(for exerciseID: UUID, at index: Int) -> Set? {
-        if let sets = setsData[exerciseID], sets.count > index {
-            return sets[index]
+    func getSetData(for exerciseID: UUID, at index: Int) -> WorkoutSet? {  // Changed Set to WorkoutSet
+            if let sets = setsData[exerciseID], sets.count > index {
+                return sets[index]
+            }
+            return nil
         }
-        return nil
-    }
 
-    func setWeight(_ weight: Double, for exerciseID: UUID, at index: Int) {
-        if setsData[exerciseID] == nil {
-            setsData[exerciseID] = Array(repeating: Set(reps: 0, weight: 0, date: Date()), count: index + 1)
+        func setWeight(_ weight: Double, for exerciseID: UUID, at index: Int) {
+            if setsData[exerciseID] == nil {
+                setsData[exerciseID] = Array(repeating: WorkoutSet(weight: 0, reps: 0), count: index + 1)  // Changed Set to WorkoutSet
+            }
+            if setsData[exerciseID]!.count <= index {
+                setsData[exerciseID]!.append(WorkoutSet(weight: weight, reps: 0))  // Changed Set to WorkoutSet
+            } else {
+                // Need to create a new WorkoutSet since it's immutable
+                let currentSet = setsData[exerciseID]![index]
+                setsData[exerciseID]![index] = WorkoutSet(weight: weight, reps: currentSet.reps)
+            }
         }
-        if setsData[exerciseID]!.count <= index {
-            setsData[exerciseID]!.append(Set(reps: 0, weight: weight, date: Date()))
-        } else {
-            setsData[exerciseID]![index].weight = weight
-        }
-    }
 
-    func setReps(_ reps: Int, for exerciseID: UUID, at index: Int) {
-        if setsData[exerciseID] == nil {
-            setsData[exerciseID] = Array(repeating: Set(reps: 0, weight: 0, date: Date()), count: index + 1)
+        func setReps(_ reps: Int, for exerciseID: UUID, at index: Int) {
+            if setsData[exerciseID] == nil {
+                setsData[exerciseID] = Array(repeating: WorkoutSet(weight: 0, reps: 0), count: index + 1)  // Changed Set to WorkoutSet
+            }
+            if setsData[exerciseID]!.count <= index {
+                setsData[exerciseID]!.append(WorkoutSet(weight: 0, reps: reps))  // Changed Set to WorkoutSet
+            } else {
+                // Need to create a new WorkoutSet since it's immutable
+                let currentSet = setsData[exerciseID]![index]
+                setsData[exerciseID]![index] = WorkoutSet(weight: currentSet.weight, reps: reps)
+            }
         }
-        if setsData[exerciseID]!.count <= index {
-            setsData[exerciseID]!.append(Set(reps: reps, weight: 0, date: Date()))
-        } else {
-            setsData[exerciseID]![index].reps = reps
-        }
-    }
 
     func saveWorkoutData() {
         for (exerciseID, sets) in setsData {
