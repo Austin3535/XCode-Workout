@@ -8,55 +8,49 @@ struct TrackWorkoutView: View {
     @State private var remainingRestTime: Int = 0
     @State private var showingProgressionSettings = false
     @State private var selectedExercise: Exercise?
+    @State private var expandedExercise: UUID?
     var day: Day
     
     var body: some View {
         List {
             ForEach(day.exercises) { exercise in
-                Section(header: HStack {
-                    Text(exercise.name)
-                    Spacer()
-                    
-                    Button(action: {
-                        selectedExercise = exercise
-                        showingProgressionSettings = true
-                    }) {
-                        Image(systemName: "gear")
-                    }
-                    
-                    Button(action: {
-                        startRestTimer(for: exercise.customRestPeriod ?? exercise.restPeriod)
-                    }) {
-                        HStack {
-                            Text("Start Rest Timer")
-                            if remainingRestTime > 0 {
-                                Text("(\(remainingRestTime) sec)")
-                            }
-                        }
-                    }
-                }) {
-                    VStack {
+                DisclosureGroup(
+                    isExpanded: Binding(
+                        get: { expandedExercise == exercise.id },
+                        set: { if $0 { expandedExercise = exercise.id } else { expandedExercise = nil } }
+                    )
+                ) {
+                    VStack(spacing: 12) {
                         // Progression Suggestion Display
                         if let suggestion = routine.progressionSuggestions[exercise.id] {
                             Text(suggestion.message)
-                                .padding()
+                                .font(.system(size: 16, weight: .medium)) // Adjust font size and weight here
+                                .padding(12)  // Adjust internal padding here
+                                .frame(maxWidth: .infinity) // Makes the box take full width
                                 .background(Color.green.opacity(0.2))
-                                .cornerRadius(8)
-                                .padding(.bottom)
+                                .cornerRadius(8)  // Adjust corner roundness here
+                                .padding(.bottom, 10) // Adjust spacing below the box
                         }
                         
-                        // Exercise Sets Input
-                        ForEach(0..<exercise.sets, id: \.self) { setIndex in
-                            SetInputView(
-                                setNumber: setIndex + 1,
-                                exerciseId: exercise.id,
-                                setsData: $setsData,
-                                remainingRestTime: remainingRestTime,
-                                isLastSet: setIndex == exercise.sets - 1,
-                                onStartRest: {
-                                    startRestTimer(for: exercise.customRestPeriod ?? exercise.restPeriod)
-                                }
-                            )
+                        // Exercise Sets Input with Grid
+                        LazyVGrid(
+                            columns: [
+                                GridItem(.adaptive(minimum: 300))
+                            ],
+                            spacing: 8
+                        ) {
+                            ForEach(0..<exercise.sets, id: \.self) { setIndex in
+                                SetInputView(
+                                    setNumber: setIndex + 1,
+                                    exerciseId: exercise.id,
+                                    setsData: $setsData,
+                                    remainingRestTime: remainingRestTime,
+                                    isLastSet: setIndex == exercise.sets - 1,
+                                    onStartRest: {
+                                        startRestTimer(for: exercise.customRestPeriod ?? exercise.restPeriod)
+                                    }
+                                )
+                            }
                         }
                         
                         // Previous Sets Display
@@ -65,9 +59,37 @@ struct TrackWorkoutView: View {
                             PreviousSetsView(previousSets: previousSets)
                         }
                     }
+                } label: {
+                    HStack {
+                        Text(exercise.name)
+                            .font(.headline)
+                        Spacer()
+                        
+                        Button(action: {
+                            selectedExercise = exercise
+                            showingProgressionSettings = true
+                        }) {
+                            Image(systemName: "gear")
+                                .foregroundColor(.gray)
+                        }
+                        
+                        Button(action: {
+                            startRestTimer(for: exercise.customRestPeriod ?? exercise.restPeriod)
+                        }) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "timer")
+                                if remainingRestTime > 0 {
+                                    Text("\(remainingRestTime)s")
+                                        .font(.caption)
+                                }
+                            }
+                            .foregroundColor(.blue)
+                        }
+                    }
                 }
             }
         }
+
         .navigationTitle(day.name)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
