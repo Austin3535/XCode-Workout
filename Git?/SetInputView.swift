@@ -15,10 +15,8 @@ struct SetInputView: View {
             ZStack {
                 Circle()
                     .fill(Color(.systemGray6))
-                    // Adjust circle size here
-                    .frame(width: 40, height: 40)
+                    .frame(width: 35, height: 35)
                 Text("\(setNumber)")
-                    // Adjust set number font size and weight here
                     .font(.system(size: 16, weight: .semibold))
             }
             
@@ -29,7 +27,6 @@ struct SetInputView: View {
                     // Weight Input
                     VStack(alignment: .leading) {
                         Text("Weight")
-                            // Adjust "Weight" label font size here
                             .font(.caption)
                             .foregroundColor(.gray)
                         // Adjust spacing between TextField and "lbs"
@@ -37,10 +34,8 @@ struct SetInputView: View {
                             TextField("0", value: weightBinding, formatter: NumberFormatter())
                                 .keyboardType(.decimalPad)
                                 .textFieldStyle(RoundedBorderTextFieldStyle())
-                                // Adjust width of weight input field
                                 .frame(width: 80)
                             Text("lbs")
-                                // Adjust "lbs" font size here
                                 .font(.system(size: 12))
                                 .foregroundColor(.gray)
                         }
@@ -49,36 +44,19 @@ struct SetInputView: View {
                     // Reps Input
                     VStack(alignment: .leading) {
                         Text("Reps")
-                            // Adjust "Reps" label font size here
                             .font(.caption)
                             .foregroundColor(.gray)
                         TextField("0", value: repsBinding, formatter: NumberFormatter())
                             .keyboardType(.numberPad)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
-                            // Adjust width of reps input field
                             .frame(width: 80)
                     }
                 }
             }
             
             Spacer()
-            
-            // Rest Timer
-            if !isLastSet && remainingRestTime > 0 {
-                VStack(alignment: .trailing) {
-                    Text("\(remainingRestTime)s")
-                        // Adjust timer number font size here
-                        .font(.system(.body, design: .rounded))
-                        .fontWeight(.medium)
-                        .foregroundColor(.blue)
-                    Text("rest")
-                        // Adjust "rest" label font size here
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                }
-                .onTapGesture(perform: onStartRest)
-            }
         }
+
         // Adjust overall padding around the entire view
         .padding()
         .background(Color(.systemBackground))
