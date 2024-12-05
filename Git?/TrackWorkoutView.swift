@@ -3,9 +3,11 @@ import SwiftUI
 struct TrackWorkoutView: View {
     @EnvironmentObject var routine: Routine
     @Environment(\.presentationMode) var presentationMode
-    @State private var setsData: [UUID: [WorkoutSet]] = [:]  // Changed Set to WorkoutSet
+    @State private var setsData: [UUID: [WorkoutSet]] = [:]
     @State private var restTimer: Timer?
     @State private var remainingRestTime: Int = 0
+    @State private var showingProgressionSettings = false
+    @State private var selectedExercise: Exercise?
     var day: Day
 
     var body: some View {
@@ -14,6 +16,15 @@ struct TrackWorkoutView: View {
                 Section(header: HStack {
                     Text(exercise.name)
                     Spacer()
+                    
+                    // Add Progression Settings Button
+                    Button(action: {
+                        selectedExercise = exercise
+                        showingProgressionSettings = true
+                    }) {
+                        Image(systemName: "gear")
+                    }
+                    
                     Button(action: {
                         startRestTimer(for: exercise.customRestPeriod ?? exercise.restPeriod)
                     }) {
@@ -25,34 +36,60 @@ struct TrackWorkoutView: View {
                         }
                     }
                 }) {
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: exercise.sets)) {
-                        ForEach(0..<exercise.sets, id: \.self) { setIndex in
-                            VStack {
-                                Text("Set \(setIndex + 1)")
-                                let weightBinding = Binding(
-                                    get: { getSetData(for: exercise.id, at: setIndex)?.weight ?? 0 },
-                                    set: { setWeight($0, for: exercise.id, at: setIndex) }
-                                )
-                                TextField("Weight", value: weightBinding, formatter: NumberFormatter())
-                                    .keyboardType(.decimalPad)
-                                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                                    .frame(width: 80)
-                                
-                                let repsBinding = Binding(
-                                    get: { getSetData(for: exercise.id, at: setIndex)?.reps ?? 0 },
-                                    set: { setReps($0, for: exercise.id, at: setIndex) }
-                                )
-                                TextField("Reps", value: repsBinding, formatter: NumberFormatter())
-                                    .keyboardType(.numberPad)
-                                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                                    .frame(width: 80)
-                                
-                                if setIndex < exercise.sets - 1 {
-                                    if remainingRestTime > 0 {
-                                        Text("Resting: \(remainingRestTime) sec")
+                    VStack {
+                        // Progression Suggestion Display
+                        if let suggestion = routine.progressionSuggestions[exercise.id] {
+                            Text(suggestion.message)
+                                .padding()
+                                .background(Color.green.opacity(0.2))
+                                .cornerRadius(8)
+                                .padding(.bottom)
+                        }
+                        
+                        // Exercise Sets Grid
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: exercise.sets)) {
+                            ForEach(0..<exercise.sets, id: \.self) { setIndex in
+                                VStack {
+                                    Text("Set \(setIndex + 1)")
+                                    let weightBinding = Binding(
+                                        get: { getSetData(for: exercise.id, at: setIndex)?.weight ?? 0 },
+                                        set: { setWeight($0, for: exercise.id, at: setIndex) }
+                                    )
+                                    TextField("Weight", value: weightBinding, formatter: NumberFormatter())
+                                        .keyboardType(.decimalPad)
+                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                        .frame(width: 80)
+                                    
+                                    let repsBinding = Binding(
+                                        get: { getSetData(for: exercise.id, at: setIndex)?.reps ?? 0 },
+                                        set: { setReps($0, for: exercise.id, at: setIndex) }
+                                    )
+                                    TextField("Reps", value: repsBinding, formatter: NumberFormatter())
+                                        .keyboardType(.numberPad)
+                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                        .frame(width: 80)
+                                    
+                                    if setIndex < exercise.sets - 1 {
+                                        if remainingRestTime > 0 {
+                                            Text("Resting: \(remainingRestTime) sec")
+                                        }
                                     }
                                 }
                             }
+                        }
+                        
+                        // Previous Sets Display
+                        if let previousSets = routine.previousSets[exercise.id], !previousSets.isEmpty {
+                            VStack(alignment: .leading) {
+                                Text("Previous Sets:")
+                                    .font(.subheadline)
+                                    .padding(.top)
+                                ForEach(previousSets.suffix(3)) { set in
+                                    Text("\(set.weight, specifier: "%.1f")lbs × \(set.reps) reps")
+                                        .font(.caption)
+                                }
+                            }
+                            .padding(.top)
                         }
                     }
                 }
@@ -72,11 +109,25 @@ struct TrackWorkoutView: View {
                 }
             }
         }
+        .sheet(isPresented: $showingProgressionSettings) {
+            if let exercise = selectedExercise {
+                NavigationView {
+                    ExerciseProgressionSettingsView(exercise: .constant(exercise))
+                        .navigationTitle("Progression Settings")
+                        .toolbar {
+                            ToolbarItem(placement: .navigationBarTrailing) {
+                                Button("Done") {
+                                    showingProgressionSettings = false
+                                }
+                            }
+                        }
+                }
+            }
+        }
         .onDisappear {
             restTimer?.invalidate()
         }
     }
-
     func getSetData(for exerciseID: UUID, at index: Int) -> WorkoutSet? {  // Changed Set to WorkoutSet
             if let sets = setsData[exerciseID], sets.count > index {
                 return sets[index]
@@ -116,6 +167,13 @@ struct TrackWorkoutView: View {
                 routine.previousSets[exerciseID] = []
             }
             routine.previousSets[exerciseID]?.append(contentsOf: sets)
+            
+            // Check for progression after saving sets
+            if let exercise = day.exercises.first(where: { $0.id == exerciseID }) {
+                if let suggestion = ProgressionManager.analyzeSets(sets, for: exercise) {
+                    routine.progressionSuggestions[exerciseID] = suggestion
+                }
+            }
         }
     }
 

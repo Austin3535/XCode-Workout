@@ -6,6 +6,7 @@ class LocalStorage {
     private let workoutsKey = "savedWorkouts"
     private let completedWorkoutsKey = "completedWorkouts"
     private let previousSetsKey = "previousSets"
+    private let progressionSuggestionsKey = "progressionSuggestions"
     
     private init() {}
     
@@ -90,11 +91,39 @@ class LocalStorage {
         }
     }
     
+    func saveProgressionSuggestions(_ suggestions: [UUID: ProgressionSuggestion]) {
+        do {
+            let encoded = try JSONEncoder().encode(suggestions)
+            UserDefaults.standard.set(encoded, forKey: progressionSuggestionsKey)
+            UserDefaults.standard.synchronize()
+            print("DEBUG: Successfully saved progression suggestions for \(suggestions.count) exercises")
+        } catch {
+            print("DEBUG: Error saving progression suggestions: \(error)")
+        }
+    }
+    
+    func loadProgressionSuggestions() -> [UUID: ProgressionSuggestion] {
+        guard let data = UserDefaults.standard.data(forKey: progressionSuggestionsKey) else {
+            print("DEBUG: No progression suggestions data found in UserDefaults")
+            return [:]
+        }
+        
+        do {
+            let suggestions = try JSONDecoder().decode([UUID: ProgressionSuggestion].self, from: data)
+            print("DEBUG: Successfully loaded progression suggestions for \(suggestions.count) exercises")
+            return suggestions
+        } catch {
+            print("DEBUG: Error decoding progression suggestions: \(error)")
+            return [:]
+        }
+    }
+    
     // Helper method to clear all stored data (useful for debugging)
     func clearAllData() {
         UserDefaults.standard.removeObject(forKey: workoutsKey)
         UserDefaults.standard.removeObject(forKey: completedWorkoutsKey)
         UserDefaults.standard.removeObject(forKey: previousSetsKey)
+        UserDefaults.standard.removeObject(forKey: progressionSuggestionsKey)
         UserDefaults.standard.synchronize()
         print("DEBUG: Cleared all stored data")
     }
@@ -118,6 +147,12 @@ class LocalStorage {
             print("Previous sets data size: \(setsData.count) bytes")
         } else {
             print("No previous sets data stored")
+        }
+        
+        if let suggestionsData = UserDefaults.standard.data(forKey: progressionSuggestionsKey) {
+            print("Progression suggestions data size: \(suggestionsData.count) bytes")
+        } else {
+            print("No progression suggestions data stored")
         }
         print("------------------------")
     }
