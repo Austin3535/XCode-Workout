@@ -80,13 +80,39 @@ struct TrackWorkoutView: View {
                         
                         // Previous Sets Display
                         if let previousSets = routine.previousSets[exercise.id], !previousSets.isEmpty {
-                            VStack(alignment: .leading) {
-                                Text("Previous Sets:")
-                                    .font(.subheadline)
-                                    .padding(.top)
-                                ForEach(previousSets.suffix(3)) { set in
-                                    Text("\(set.weight, specifier: "%.1f")lbs × \(set.reps) reps")
-                                        .font(.caption)
+                            Section(header: Text("Previous Sets")) {
+                                ForEach(previousSets.suffix(3).reversed()) { set in
+                                    HStack(spacing: 16) {
+                                        // Weight Circle
+                                        ZStack {
+                                            Circle()
+                                                .fill(Color(.systemGray6))
+                                                .frame(width: 50, height: 50)
+                                            
+                                            VStack(spacing: 0) {
+                                                Text("\(set.weight, specifier: "%.1f")")
+                                                    .font(.system(size: 16, weight: .semibold))
+                                                Text("lbs")
+                                                    .font(.system(size: 12))
+                                                    .foregroundColor(.gray)
+                                            }
+                                        }
+                                        
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            HStack {
+                                                Text("\(set.reps) reps")
+                                                    .font(.system(.body, design: .rounded))
+                                                    .fontWeight(.medium)
+                                            }
+                                            
+                                            Text(set.date.formatted(date: .abbreviated, time: .omitted))
+                                                .font(.caption)
+                                                .foregroundColor(.gray)
+                                        }
+                                        
+                                        Spacer()
+                                    }
+                                    .padding(.vertical, 4)
                                 }
                             }
                             .padding(.top)
