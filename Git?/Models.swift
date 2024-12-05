@@ -87,22 +87,41 @@ class Routine: ObservableObject {
     }
     
     private func loadData() {
-        workouts = LocalStorage.shared.loadWorkouts()
-        completedWorkouts = LocalStorage.shared.loadCompletedWorkouts()
-        previousSets = LocalStorage.shared.loadPreviousSets()
+        // Load all data first
+        let loadedWorkouts = LocalStorage.shared.loadWorkouts()
+        let loadedCompletedWorkouts = LocalStorage.shared.loadCompletedWorkouts()
+        let loadedPreviousSets = LocalStorage.shared.loadPreviousSets()
+        
+        // Then assign to properties
+        self.workouts = loadedWorkouts
+        self.completedWorkouts = loadedCompletedWorkouts
+        self.previousSets = loadedPreviousSets
+        
         print("DEBUG: Loaded data - Workouts: \(workouts.count), Completed: \(completedWorkouts.count), Sets: \(previousSets.count)")
+    }
+    
+    private func saveData() {
+        // Only save if there's actually data to save
+        if !workouts.isEmpty {
+            LocalStorage.shared.saveWorkouts(workouts)
+        }
+        if !completedWorkouts.isEmpty {
+            LocalStorage.shared.saveCompletedWorkouts(completedWorkouts)
+        }
+        if !previousSets.isEmpty {
+            LocalStorage.shared.savePreviousSets(previousSets)
+        }
+        print("DEBUG: Saved all data")
     }
     
     func addWorkout(_ workout: Workout) {
         workouts.append(workout)
-        // No need to call saveData() here as it will be triggered by the didSet observer
     }
     
     func completeWorkout(_ workout: Workout) {
         var completedWorkout = workout
         completedWorkout.completionDate = Date()
         completedWorkouts.append(completedWorkout)
-        // No need to call saveData() here as it will be triggered by the didSet observer
     }
     
     func addSet(exerciseId: UUID, set: WorkoutSet) {
@@ -110,13 +129,5 @@ class Routine: ObservableObject {
             previousSets[exerciseId] = []
         }
         previousSets[exerciseId]?.append(set)
-        // No need to call saveData() here as it will be triggered by the didSet observer
-    }
-    
-    private func saveData() {
-        LocalStorage.shared.saveWorkouts(workouts)
-        LocalStorage.shared.saveCompletedWorkouts(completedWorkouts)
-        LocalStorage.shared.savePreviousSets(previousSets)
-        print("DEBUG: Saved all data")
     }
 }
