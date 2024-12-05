@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 
 // MARK: - ProgressionStrategy
-enum ProgressionStrategy: String, Codable {
+enum ProgressionStrategy: String, Codable, CaseIterable {
     case weight = "Weight Increase"
     case reps = "Rep Increase"
     case both = "Weight and Rep Increase"

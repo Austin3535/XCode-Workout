@@ -27,7 +27,7 @@ struct ExerciseProgressionSettingsView: View {
                 }
                 
                 Picker("Progression Strategy", selection: $selectedStrategy) {
-                    ForEach([ProgressionStrategy.weight, .reps, .both], id: \.self) { strategy in
+                    ForEach(ProgressionStrategy.allCases, id: \.self) { strategy in
                         Text(strategy.rawValue).tag(strategy)
                     }
                 }
