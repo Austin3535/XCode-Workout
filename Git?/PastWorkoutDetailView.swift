@@ -10,7 +10,8 @@ struct PastWorkoutDetailView: View {
                 Section(header: Text(day.name)) {
                     ForEach(day.exercises) { exercise in
                         if let previousSets = routine.previousSets[exercise.id] {
-                            ForEach(previousSets) { set in
+                            // Changed this ForEach to use enumerated and a compound ID
+                            ForEach(Array(zip(previousSets.indices, previousSets)), id: \.0) { index, set in
                                 HStack {
                                     Text("Weight: \(set.weight, specifier: "%.1f") lbs")
                                     Spacer()
@@ -36,7 +37,6 @@ struct PastWorkoutDetailView: View {
         return formatter
     }
 }
-
 struct PastWorkoutDetailView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {

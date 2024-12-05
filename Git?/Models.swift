@@ -48,16 +48,26 @@ struct Exercise: Identifiable, Codable {
 
 // MARK: - WorkoutSet Model
 struct WorkoutSet: Identifiable, Codable {
-    let id: UUID         // Keeping as let since it's an identifier
+    let id: UUID
     var weight: Double
     var reps: Int
-    let date: Date      // Keeping as let since it's set once at creation
+    let date: Date
     
     init(weight: Double, reps: Int) {
         self.id = UUID()
         self.weight = weight
         self.reps = reps
         self.date = Date()
+    }
+    
+    // Add custom decoder to ensure unique IDs
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        // Always generate a new UUID when decoding
+        self.id = UUID()
+        self.weight = try container.decode(Double.self, forKey: .weight)
+        self.reps = try container.decode(Int.self, forKey: .reps)
+        self.date = try container.decode(Date.self, forKey: .date)
     }
 }
 
